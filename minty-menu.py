@@ -54,6 +54,8 @@ DESKTOP_DIRS = [
 
 def _resolve_appname(entry):
     """Resolve a .desktop filename or path to an absolute path."""
+    if not entry.endswith('.desktop'):
+        entry += '.desktop'
     expanded = os.path.expanduser(entry)
     if os.path.isabs(expanded) and os.path.isfile(expanded):
         return expanded
