@@ -51,6 +51,8 @@ DESKTOP_DIRS = [
     "/var/lib/snapd/desktop/applications",
 ]
 
+TERMINAL_EMULATOR = "x-terminal-emulator"
+
 
 def _resolve_appname(entry):
     """Resolve a .desktop filename or path to an absolute path."""
@@ -89,8 +91,7 @@ def _parse_desktop_file(path):
         terminal = cp.get(section, "Terminal", fallback="false").lower() == "true"
         if terminal:
             # Wrap in a terminal emulator
-            term = "x-terminal-emulator"
-            cmd = f"{term} -e {cmd}"
+            cmd = f"{TERMINAL_EMULATOR} -e {cmd}"
         return {"name": name, "icon": icon, "cmd": cmd}
     except Exception as e:
         print(f"Warning: could not parse {path}: {e}", file=sys.stderr)
