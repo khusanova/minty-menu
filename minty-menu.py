@@ -16,7 +16,7 @@ don't have to figure out commands or icon names yourself.
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, Pango, GLib
-import subprocess, os, sys, configparser, shlex, re
+import subprocess, os, sys, configparser, re
 
 # ─── CONFIGURE YOUR APPS HERE ──────────────────────────────────────
 # Just list .desktop filenames (looked up automatically) or full paths.
