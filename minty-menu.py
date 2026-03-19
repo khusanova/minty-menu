@@ -52,8 +52,10 @@ DESKTOP_DIRS = [
 ]
 
 
-def _resolve_desktop_file(entry):
+def _resolve_appname(entry):
     """Resolve a .desktop filename or path to an absolute path."""
+    if not entry.endswith('.desktop'):
+        entry += '.desktop'
     expanded = os.path.expanduser(entry)
     if os.path.isabs(expanded) and os.path.isfile(expanded):
         return expanded
@@ -102,7 +104,7 @@ def load_apps():
     """Load app entries from the DESKTOP_FILES list."""
     apps = []
     for entry in DESKTOP_FILES:
-        path = _resolve_desktop_file(entry)
+        path = _resolve_appname(entry)
         if path is None:
             print(f"Warning: could not find '{entry}', skipping.", file=sys.stderr)
             continue
