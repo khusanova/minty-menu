@@ -79,9 +79,6 @@ def _parse_desktop_file(path):
         section = "Desktop Entry"
         if not cp.has_section(section):
             return None
-        # Skip entries marked as hidden or no-display
-        if cp.has_option(section, "NoDisplay") and cp.get(section, "NoDisplay").lower() == "true":
-            pass  # we still show it — user explicitly asked for it
         name = cp.get(section, "Name", fallback=None)
         icon = cp.get(section, "Icon", fallback="application-x-executable")
         exec_raw = cp.get(section, "Exec", fallback=None)
