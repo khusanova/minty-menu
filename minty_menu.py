@@ -14,12 +14,14 @@ The launcher reads Name, Icon, and Exec from each .desktop file so you
 don't have to figure out commands or icon names yourself.
 """
 
+import configparser
+import os
+import re
+import subprocess
+import sys
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, Pango, GLib
-import subprocess, os, sys, configparser, re
-
-
+from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 
 
 PATH_TO_APPS_LIST = "apps.list"
@@ -38,7 +40,7 @@ def load_apps_list() -> list[str]:
     try:
         with open(PATH_TO_APPS_LIST, "r", encoding="utf-8") as f:
             apps_list = [line.strip() for line in f.readlines() if not
-            line.startswith("#")]
+                         line.startswith("#")]
             return apps_list
     except FileNotFoundError:
         print(f"App list not found: {PATH_TO_APPS_LIST} does not exist.",
@@ -104,7 +106,8 @@ def _parse_desktop_file(path):
             return None
         cmd = _clean_exec(exec_raw)
         # Handle Terminal=true apps
-        terminal = cp.get(section, "Terminal", fallback="false").lower() == "true"
+        terminal = (cp.get(section, "Terminal", fallback="false").lower() ==
+                    "true")
         if terminal:
             # Wrap in a terminal emulator
             cmd = f"{TERMINAL_EMULATOR} -e {cmd}"
@@ -120,13 +123,15 @@ def load_apps():
     for entry in DESKTOP_FILES:
         path = _resolve_appname(entry)
         if path is None:
-            print(f"Warning: could not find '{entry}', skipping.", file=sys.stderr)
+            print(f"Warning: could not find '{entry}', skipping.",
+                  file=sys.stderr)
             continue
         app = _parse_desktop_file(path)
         if app:
             apps.append(app)
         else:
-            print(f"Warning: could not parse '{entry}', skipping.", file=sys.stderr)
+            print(f"Warning: could not parse '{entry}', skipping.",
+                  file=sys.stderr)
     return apps
 
 
@@ -288,7 +293,8 @@ class MiniLauncher(Gtk.Window):
             )
             return Gtk.Image.new_from_pixbuf(pixbuf)
         # Fallback
-        img = Gtk.Image.new_from_icon_name("application-x-executable", Gtk.IconSize.DIALOG)
+        img = Gtk.Image.new_from_icon_name("application-x-executable",
+                                           Gtk.IconSize.DIALOG)
         img.set_pixel_size(ICON_SIZE)
         return img
 
