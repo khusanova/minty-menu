@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Mini Launcher — A minimal, distraction-free app grid for Linux Mint.
+Minty Menu — A minimal, distraction-free app grid for Linux Mint.
 
 Usage:
-  1. Edit the DESKTOP_FILES list below — just drop in .desktop filenames
-     or full paths. Filenames are looked up in /usr/share/applications/
-     and ~/.local/share/applications/ automatically.
+  1. Edit the apps.list file — just drop names of the applications you want
+  to add to the menu or full paths to desktop files.
+  Files are looked up in /usr/share/applications/ and
+  ~/.local/share/applications/ automatically.
   2. Run:  python3 mini-launcher.py
   3. (Optional) Bind to a keyboard shortcut for instant access.
 
@@ -13,33 +14,51 @@ The launcher reads Name, Icon, and Exec from each .desktop file so you
 don't have to figure out commands or icon names yourself.
 """
 
+import cairo
+import configparser
+import os
+import re
+import subprocess
+import sys
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, Pango, GLib
-import subprocess, os, sys, configparser, shlex, re
+from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 
-# ─── CONFIGURE YOUR APPS HERE ──────────────────────────────────────
-# Just list .desktop filenames (looked up automatically) or full paths.
-# To find the right filename, run:
-#   ls /usr/share/applications/ | grep -i firefox
-#
-# Examples of valid entries:
-#   "firefox.desktop"
-#   "org.gnome.Terminal.desktop"
-#   "/usr/share/applications/nemo.desktop"
-#   "~/.local/share/applications/my-app.desktop"
 
-DESKTOP_FILES = [
-    "firefox.desktop",
-    "nemo.desktop",
-    "org.gnome.Terminal.desktop",
-    "xed.desktop",
-    "cinnamon-settings.desktop",
-    "gnome-calculator.desktop",
-    "gnome-screenshot.desktop",
-    "mintinstall.desktop",
-    "gnome-system-monitor.desktop",
-]
+PATH_TO_APPS_LIST = "apps.list"
+
+
+def load_apps_list() -> list[str]:
+    """Load names of applications from the apps list file.
+
+    Reads PATH_TO_APPS_LIST line by line, strips whitespace, and returns
+    the entries.
+
+    Returns:
+        List of stripped application names, or an empty list
+        if the file could not be read.
+    """
+    try:
+        with open(PATH_TO_APPS_LIST, "r", encoding="utf-8") as f:
+            apps_list = [line.strip() for line in f.readlines() if not
+                         line.startswith("#")]
+            return apps_list
+    except FileNotFoundError:
+        print(f"App list not found: {PATH_TO_APPS_LIST} does not exist.",
+              file=sys.stderr)
+    except PermissionError:
+        print(f"Cannot read file {PATH_TO_APPS_LIST}. Permission denied.",
+              file=sys.stderr)
+    except UnicodeDecodeError:
+        print(f"Cannot read file {PATH_TO_APPS_LIST}. Encoding should be "
+              "UTF-8.", file=sys.stderr)
+    except OSError as e:
+        print(f"Failed to load {PATH_TO_APPS_LIST}: {e}",
+              file=sys.stderr)
+    return []
+
+
+DESKTOP_FILES = load_apps_list()
 
 # Standard directories where .desktop files live
 DESKTOP_DIRS = [
@@ -50,6 +69,8 @@ DESKTOP_DIRS = [
     os.path.expanduser("~/.local/share/flatpak/exports/share/applications"),
     "/var/lib/snapd/desktop/applications",
 ]
+
+TERMINAL_EMULATOR = "x-terminal-emulator"
 
 
 def _resolve_appname(entry):
@@ -79,9 +100,6 @@ def _parse_desktop_file(path):
         section = "Desktop Entry"
         if not cp.has_section(section):
             return None
-        # Skip entries marked as hidden or no-display
-        if cp.has_option(section, "NoDisplay") and cp.get(section, "NoDisplay").lower() == "true":
-            pass  # we still show it — user explicitly asked for it
         name = cp.get(section, "Name", fallback=None)
         icon = cp.get(section, "Icon", fallback="application-x-executable")
         exec_raw = cp.get(section, "Exec", fallback=None)
@@ -89,11 +107,11 @@ def _parse_desktop_file(path):
             return None
         cmd = _clean_exec(exec_raw)
         # Handle Terminal=true apps
-        terminal = cp.get(section, "Terminal", fallback="false").lower() == "true"
+        terminal = (cp.get(section, "Terminal", fallback="false").lower() ==
+                    "true")
         if terminal:
             # Wrap in a terminal emulator
-            term = "x-terminal-emulator"
-            cmd = f"{term} -e {cmd}"
+            cmd = f"{TERMINAL_EMULATOR} -e {cmd}"
         return {"name": name, "icon": icon, "cmd": cmd}
     except Exception as e:
         print(f"Warning: could not parse {path}: {e}", file=sys.stderr)
@@ -106,29 +124,36 @@ def load_apps():
     for entry in DESKTOP_FILES:
         path = _resolve_appname(entry)
         if path is None:
-            print(f"Warning: could not find '{entry}', skipping.", file=sys.stderr)
+            print(f"Warning: could not find '{entry}', skipping.",
+                  file=sys.stderr)
             continue
         app = _parse_desktop_file(path)
         if app:
             apps.append(app)
         else:
-            print(f"Warning: could not parse '{entry}', skipping.", file=sys.stderr)
+            print(f"Warning: could not parse '{entry}', skipping.",
+                  file=sys.stderr)
     return apps
 
 
 APPS = load_apps()
 
 # Grid layout
-COLUMNS = 3          # number of columns in the grid
+COLUMNS = 7          # number of columns in the grid
 ICON_SIZE = 64       # icon size in pixels
-WINDOW_WIDTH = 520
+WINDOW_WIDTH = 700
 WINDOW_HEIGHT = -1   # auto-fit to content
 
 # ─── COLOURS / STYLE ───────────────────────────────────────────────
 CSS = b"""
 window {
-    background-color: #1a1b26;
+    background-color: transparent;
     border-radius: 18px;
+}
+flowboxchild {
+    background: transparent;
+    border: none;
+    padding: 0;
 }
 .app-button {
     background: transparent;
@@ -149,7 +174,7 @@ window {
     font-weight: 500;
 }
 .search-entry {
-    background-color: rgba(255,255,255,0.06);
+    background-color: rgba(50, 52, 70, 0.7);
     color: #c0caf5;
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 10px;
@@ -159,7 +184,7 @@ window {
 }
 .search-entry:focus {
     border-color: #7aa2f7;
-    background-color: rgba(255,255,255,0.09);
+    background-color: rgba(55, 57, 78, 0.7);
 }
 .title-label {
     color: #7aa2f7;
@@ -172,7 +197,7 @@ window {
 
 class MiniLauncher(Gtk.Window):
     def __init__(self):
-        super().__init__(title="Mini Launcher")
+        super().__init__(title="Minty Menu")
         self.set_decorated(False)
         self.set_resizable(False)
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -186,6 +211,7 @@ class MiniLauncher(Gtk.Window):
         if visual:
             self.set_visual(visual)
         self.set_app_paintable(True)
+        self.connect("draw", self._on_draw)
 
         # Load CSS
         css_provider = Gtk.CssProvider()
@@ -207,7 +233,7 @@ class MiniLauncher(Gtk.Window):
         vbox.set_margin_end(20)
 
         # Title
-        title = Gtk.Label(label="MINI LAUNCHER")
+        title = Gtk.Label(label="MINTY MENU")
         title.get_style_context().add_class("title-label")
         vbox.pack_start(title, False, False, 0)
 
@@ -238,6 +264,12 @@ class MiniLauncher(Gtk.Window):
         self.show_all()
 
     # ── Helpers ─────────────────────────────────────────────────────
+    def _on_draw(self, widget, cr):
+        cr.set_source_rgba(0.102, 0.106, 0.149, 0.7)  # #1a1b26 at 88% opacity
+        cr.set_operator(cairo.OPERATOR_SOURCE)
+        cr.paint()
+        return False
+
     def _make_button(self, app):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         box.set_halign(Gtk.Align.CENTER)
@@ -274,7 +306,8 @@ class MiniLauncher(Gtk.Window):
             )
             return Gtk.Image.new_from_pixbuf(pixbuf)
         # Fallback
-        img = Gtk.Image.new_from_icon_name("application-x-executable", Gtk.IconSize.DIALOG)
+        img = Gtk.Image.new_from_icon_name("application-x-executable",
+                                           Gtk.IconSize.DIALOG)
         img.set_pixel_size(ICON_SIZE)
         return img
 
