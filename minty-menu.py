@@ -37,7 +37,9 @@ def load_apps_list() -> list[str]:
     """
     try:
         with open(PATH_TO_APPS_LIST, "r", encoding="utf-8") as f:
-            apps_list = f.readlines()
+            apps_list = [line.strip() for line in f.readlines() if not
+            line.startswith("#")]
+            return apps_list
     except FileNotFoundError:
         print(f"App list not found: {PATH_TO_APPS_LIST} does not exist.",
               file=sys.stderr)
@@ -50,10 +52,6 @@ def load_apps_list() -> list[str]:
     except OSError as e:
         print(f"Failed to load {PATH_TO_APPS_LIST}: {e}",
               file=sys.stderr)
-    else:
-        for i, app in enumerate(apps_list):
-            apps_list[i] = app.strip()
-        return apps_list
     return []
 
 
