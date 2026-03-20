@@ -14,6 +14,7 @@ The launcher reads Name, Icon, and Exec from each .desktop file so you
 don't have to figure out commands or icon names yourself.
 """
 
+import cairo
 import configparser
 import os
 import re
@@ -138,16 +139,21 @@ def load_apps():
 APPS = load_apps()
 
 # Grid layout
-COLUMNS = 3          # number of columns in the grid
+COLUMNS = 7          # number of columns in the grid
 ICON_SIZE = 64       # icon size in pixels
-WINDOW_WIDTH = 520
+WINDOW_WIDTH = 700
 WINDOW_HEIGHT = -1   # auto-fit to content
 
 # ─── COLOURS / STYLE ───────────────────────────────────────────────
 CSS = b"""
 window {
-    background-color: #1a1b26;
+    background-color: transparent;
     border-radius: 18px;
+}
+flowboxchild {
+    background: transparent;
+    border: none;
+    padding: 0;
 }
 .app-button {
     background: transparent;
@@ -168,7 +174,7 @@ window {
     font-weight: 500;
 }
 .search-entry {
-    background-color: rgba(255,255,255,0.06);
+    background-color: rgba(50, 52, 70, 0.7);
     color: #c0caf5;
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 10px;
@@ -178,7 +184,7 @@ window {
 }
 .search-entry:focus {
     border-color: #7aa2f7;
-    background-color: rgba(255,255,255,0.09);
+    background-color: rgba(55, 57, 78, 0.7);
 }
 .title-label {
     color: #7aa2f7;
@@ -205,6 +211,7 @@ class MiniLauncher(Gtk.Window):
         if visual:
             self.set_visual(visual)
         self.set_app_paintable(True)
+        self.connect("draw", self._on_draw)
 
         # Load CSS
         css_provider = Gtk.CssProvider()
@@ -257,6 +264,12 @@ class MiniLauncher(Gtk.Window):
         self.show_all()
 
     # ── Helpers ─────────────────────────────────────────────────────
+    def _on_draw(self, widget, cr):
+        cr.set_source_rgba(0.102, 0.106, 0.149, 0.7)  # #1a1b26 at 88% opacity
+        cr.set_operator(cairo.OPERATOR_SOURCE)
+        cr.paint()
+        return False
+
     def _make_button(self, app):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         box.set_halign(Gtk.Align.CENTER)
