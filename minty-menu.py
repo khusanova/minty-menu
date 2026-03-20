@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-MintPad — A minimal, distraction-free app grid for Linux Mint.
+Minty Menu — A minimal, distraction-free app grid for Linux Mint.
 
 Usage:
-  1. Edit the DESKTOP_FILES list below — just drop in .desktop filenames
-     or full paths. Filenames are looked up in /usr/share/applications/
-     and ~/.local/share/applications/ automatically.
+  1. Edit the apps.list file — just drop names of the applications you want
+  to add to the menu or full paths to desktop files.
+  Files are looked up in /usr/share/applications/ and
+  ~/.local/share/applications/ automatically.
   2. Run:  python3 mini-launcher.py
   3. (Optional) Bind to a keyboard shortcut for instant access.
 
@@ -18,16 +19,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, Pango, GLib
 import subprocess, os, sys, configparser, re
 
-# ─── CONFIGURE YOUR APPS HERE ──────────────────────────────────────
-# Just list .desktop filenames (looked up automatically) or full paths.
-# To find the right filename, run:
-#   ls /usr/share/applications/ | grep -i firefox
-#
-# Examples of valid entries:
-#   "firefox.desktop"
-#   "org.gnome.Terminal.desktop"
-#   "/usr/share/applications/nemo.desktop"
-#   "~/.local/share/applications/my-app.desktop"
+
 
 
 PATH_TO_APPS_LIST = "apps.list"
@@ -196,7 +188,7 @@ window {
 
 class MiniLauncher(Gtk.Window):
     def __init__(self):
-        super().__init__(title="MintPad")
+        super().__init__(title="Minty Menu")
         self.set_decorated(False)
         self.set_resizable(False)
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -231,7 +223,7 @@ class MiniLauncher(Gtk.Window):
         vbox.set_margin_end(20)
 
         # Title
-        title = Gtk.Label(label="MINTPAD")
+        title = Gtk.Label(label="MINTY MENU")
         title.get_style_context().add_class("title-label")
         vbox.pack_start(title, False, False, 0)
 

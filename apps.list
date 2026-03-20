@@ -1,3 +1,19 @@
+# ─── CONFIGURE YOUR APPS HERE ──────────────────────────────────────
+# Just list application names (.desktop files will be looked up automatically)
+or full paths to their .desktop files.
+# To find the right path, run:
+#   ls /usr/share/applications/ | grep -i firefox
+#
+# To find path for WebApps, run:
+#
+#   ls /home/username/.local/share/applications/ | grep -i WebApp-GoogleDocs
+#
+# Examples of valid entries:
+#   "firefox"
+#   "firefox.desktop"
+#   "org.gnome.Terminal.desktop"
+#   "/usr/share/applications/nemo.desktop"
+#   "~/.local/share/applications/my-app.desktop"
 firefox
 nemo
 org.gnome.Terminal
