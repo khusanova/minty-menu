@@ -29,17 +29,43 @@ import subprocess, os, sys, configparser, re
 #   "/usr/share/applications/nemo.desktop"
 #   "~/.local/share/applications/my-app.desktop"
 
-DESKTOP_FILES = [
-    "firefox.desktop",
-    "nemo.desktop",
-    "org.gnome.Terminal.desktop",
-    "xed.desktop",
-    "cinnamon-settings.desktop",
-    "gnome-calculator.desktop",
-    "gnome-screenshot.desktop",
-    "mintinstall.desktop",
-    "gnome-system-monitor.desktop",
-]
+
+PATH_TO_APPS_LIST = "apps.list"
+
+
+def load_apps_list() -> list[str]:
+    """Load names of applications from the apps list file.
+
+    Reads PATH_TO_APPS_LIST line by line, strips whitespace, and returns
+    the entries.
+
+    Returns:
+        List of stripped application names, or an empty list
+        if the file could not be read.
+    """
+    try:
+        with open(PATH_TO_APPS_LIST, "r", encoding="utf-8") as f:
+            apps_list = f.readlines()
+    except FileNotFoundError:
+        print(f"App list not found: {PATH_TO_APPS_LIST} does not exist.",
+              file=sys.stderr)
+    except PermissionError:
+        print(f"Cannot read file {PATH_TO_APPS_LIST}. Permission denied.",
+              file=sys.stderr)
+    except UnicodeDecodeError:
+        print(f"Cannot read file {PATH_TO_APPS_LIST}. Encoding should be "
+              "UTF-8.", file=sys.stderr)
+    except OSError as e:
+        print(f"Failed to load {PATH_TO_APPS_LIST}: {e}",
+              file=sys.stderr)
+    else:
+        for i, app in enumerate(apps_list):
+            apps_list[i] = app.strip()
+        return apps_list
+    return []
+
+
+DESKTOP_FILES = load_apps_list()
 
 # Standard directories where .desktop files live
 DESKTOP_DIRS = [
