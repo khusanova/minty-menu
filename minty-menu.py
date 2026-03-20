@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Mini Launcher — A minimal, distraction-free app grid for Linux Mint.
+MintPad — A minimal, distraction-free app grid for Linux Mint.
 
 Usage:
   1. Edit the DESKTOP_FILES list below — just drop in .desktop filenames
@@ -196,7 +196,7 @@ window {
 
 class MiniLauncher(Gtk.Window):
     def __init__(self):
-        super().__init__(title="Mini Launcher")
+        super().__init__(title="MintPad")
         self.set_decorated(False)
         self.set_resizable(False)
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -231,7 +231,7 @@ class MiniLauncher(Gtk.Window):
         vbox.set_margin_end(20)
 
         # Title
-        title = Gtk.Label(label="MINI LAUNCHER")
+        title = Gtk.Label(label="MINTPAD")
         title.get_style_context().add_class("title-label")
         vbox.pack_start(title, False, False, 0)
 
