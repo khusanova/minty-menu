@@ -163,31 +163,31 @@ flowboxchild {
     transition: background 200ms ease;
 }
 .app-button:hover {
-    background-color: rgba(255,255,255,0.08);
+    background-color: alpha(@theme_selected_bg_color, 0.15);
 }
 .app-button:active {
-    background-color: rgba(255,255,255,0.14);
+    background-color: alpha(@theme_selected_bg_color, 0.25);
 }
 .app-label {
-    color: #c0caf5;
+    color: @theme_fg_color;
     font-size: 12px;
     font-weight: 500;
 }
 .search-entry {
-    background-color: rgba(50, 52, 70, 0.7);
-    color: #c0caf5;
-    border: 1px solid rgba(255,255,255,0.1);
+    background-color: alpha(@theme_base_color, 0.7);
+    color: @theme_text_color;
+    border: 1px solid @borders;
     border-radius: 10px;
     padding: 8px 14px;
     font-size: 14px;
-    caret-color: #7aa2f7;
+    caret-color: @theme_selected_bg_color;
 }
 .search-entry:focus {
-    border-color: #7aa2f7;
-    background-color: rgba(55, 57, 78, 0.7);
+    border-color: @theme_selected_bg_color;
+    background-color: alpha(@theme_base_color, 0.8);
 }
 .title-label {
-    color: #7aa2f7;
+    color: @theme_selected_bg_color;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -265,7 +265,9 @@ class MiniLauncher(Gtk.Window):
 
     # ── Helpers ─────────────────────────────────────────────────────
     def _on_draw(self, widget, cr):
-        cr.set_source_rgba(0.102, 0.106, 0.149, 0.7)  # #1a1b26 at 88% opacity
+        ctx = self.get_style_context()
+        bg = ctx.get_background_color(Gtk.StateFlags.NORMAL)
+        cr.set_source_rgba(bg.red, bg.green, bg.blue, 0.7)
         cr.set_operator(cairo.OPERATOR_SOURCE)
         cr.paint()
         return False
