@@ -14,7 +14,6 @@ The launcher reads Name, Icon, and Exec from each .desktop file so you
 don't have to figure out commands or icon names yourself.
 """
 
-import cairo
 import configparser
 import os
 import re
@@ -144,57 +143,6 @@ ICON_SIZE = 64       # icon size in pixels
 WINDOW_WIDTH = 700
 WINDOW_HEIGHT = -1   # auto-fit to content
 
-# ─── COLOURS / STYLE ───────────────────────────────────────────────
-CSS = b"""
-window {
-    background-color: transparent;
-    border-radius: 18px;
-}
-flowboxchild {
-    background: transparent;
-    border: none;
-    padding: 0;
-}
-.app-button {
-    background: transparent;
-    border: none;
-    border-radius: 14px;
-    padding: 16px 8px;
-    transition: background 200ms ease;
-}
-.app-button:hover {
-    background-color: alpha(@theme_selected_bg_color, 0.15);
-}
-.app-button:active {
-    background-color: alpha(@theme_selected_bg_color, 0.25);
-}
-.app-label {
-    color: @theme_fg_color;
-    font-size: 12px;
-    font-weight: 500;
-}
-.search-entry {
-    background-color: alpha(@theme_base_color, 0.7);
-    color: @theme_text_color;
-    border: 1px solid @borders;
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 14px;
-    caret-color: @theme_selected_bg_color;
-}
-.search-entry:focus {
-    border-color: @theme_selected_bg_color;
-    background-color: alpha(@theme_base_color, 0.8);
-}
-.title-label {
-    color: @theme_selected_bg_color;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2px;
-}
-"""
-
-
 class MiniLauncher(Gtk.Window):
     def __init__(self):
         super().__init__(title="Minty Menu")
@@ -204,21 +152,6 @@ class MiniLauncher(Gtk.Window):
         self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.set_keep_above(True)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
-
-        # Allow transparency
-        screen = self.get_screen()
-        visual = screen.get_rgba_visual()
-        if visual:
-            self.set_visual(visual)
-        self.set_app_paintable(True)
-        self.connect("draw", self._on_draw)
-
-        # Load CSS
-        css_provider = Gtk.CssProvider()
-        css_provider.load_from_data(CSS)
-        Gtk.StyleContext.add_provider_for_screen(
-            screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
 
         # Close on Escape
         self.connect("key-press-event", self._on_key)
@@ -234,13 +167,11 @@ class MiniLauncher(Gtk.Window):
 
         # Title
         title = Gtk.Label(label="MINTY MENU")
-        title.get_style_context().add_class("title-label")
         vbox.pack_start(title, False, False, 0)
 
         # Search
         self.search = Gtk.Entry()
         self.search.set_placeholder_text("Search apps…")
-        self.search.get_style_context().add_class("search-entry")
         self.search.connect("changed", self._on_search)
         vbox.pack_start(self.search, False, False, 4)
 
@@ -263,15 +194,6 @@ class MiniLauncher(Gtk.Window):
         self.add(vbox)
         self.show_all()
 
-    # ── Helpers ─────────────────────────────────────────────────────
-    def _on_draw(self, widget, cr):
-        ctx = self.get_style_context()
-        bg = ctx.get_background_color(Gtk.StateFlags.NORMAL)
-        cr.set_source_rgba(bg.red, bg.green, bg.blue, 0.7)
-        cr.set_operator(cairo.OPERATOR_SOURCE)
-        cr.paint()
-        return False
-
     def _make_button(self, app):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         box.set_halign(Gtk.Align.CENTER)
@@ -282,15 +204,12 @@ class MiniLauncher(Gtk.Window):
 
         # Label
         label = Gtk.Label(label=app["name"])
-        label.get_style_context().add_class("app-label")
         label.set_ellipsize(Pango.EllipsizeMode.END)
         label.set_max_width_chars(12)
         box.pack_start(label, False, False, 0)
 
         btn = Gtk.Button()
-        btn.get_style_context().add_class("app-button")
         btn.add(box)
-        btn.set_relief(Gtk.ReliefStyle.NONE)
         btn.connect("clicked", lambda *a, c=app["cmd"]: self._launch(c))
         return btn
 
